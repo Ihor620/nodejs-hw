@@ -1,46 +1,42 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import pinoHttp from 'pino-http';
+import cookieParser from 'cookie-parser';
+import { errors } from 'celebrate';
+import { connectMongoDB } from './db/connectMongoDB.js';
+import { logger } from './middleware/logger.js';
+import { notFoundHandler } from './middleware/notFoundHandler.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import notesRoutes from './routes/notesRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors());
+app.use(logger);
 app.use(express.json());
-app.use(pinoHttp());
+app.use(cors({ origin: true, credentials: true }));
+app.use(cookieParser());
 
 // ── Routes ────────────────────────────────────────────────────────────────────
+app.use(authRoutes);
+app.use(notesRoutes);
 
-// GET /notes — return all notes
-app.get('/notes', (_req, res) => {
-  res.status(200).json({ message: 'Retrieved all notes' });
-});
+// ── 404 Handler ───────────────────────────────────────────────────────────────
+app.use(errors());
+app.use(notFoundHandler);
 
-// GET /notes/:noteId — return a single note by ID
-app.get('/notes/:noteId', (req, res) => {
-  const { noteId } = req.params;
-  res.status(200).json({ message: `Retrieved note with ID: ${noteId}` });
-});
-
-// GET /test-error — simulate a server error
-app.get('/test-error', () => {
-  throw new Error('Simulated server error');
-});
-
-// ── 404 Middleware ─────────────────────────────────────────────────────────────
-app.use((_req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
-
-// ── Error Middleware (500) ─────────────────────────────────────────────────────
-app.use((err, _req, res, _next) => {
-  res.status(500).json({ message: err.message });
-});
+// ── Error Handler ─────────────────────────────────────────────────────────────
+app.use(errorHandler);
 
 // ── Start server ───────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`Server is running on port ${PORT}`);
-});
+const bootstrap = async () => {
+  await connectMongoDB();
+  app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`Server is running on port ${PORT}`);
+  });
+};
+
+bootstrap();
