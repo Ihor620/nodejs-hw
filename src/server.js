@@ -24,10 +24,8 @@ app.use(authRoutes);
 app.use(notesRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
-app.use(errors());
 app.use(notFoundHandler);
-
-// ── Error Handler ─────────────────────────────────────────────────────────────
+app.use(errors());
 app.use(errorHandler);
 
 // ── Start server ───────────────────────────────────────────────────────────────
