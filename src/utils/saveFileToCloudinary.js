@@ -12,10 +12,16 @@ cloudinary.config({
  * @param {Buffer} buffer - File buffer from multer memoryStorage
  * @returns {Promise<object>} Cloudinary upload result (includes secure_url)
  */
-export const saveFileToCloudinary = (buffer) => {
+export const saveFileToCloudinary = (buffer, userId) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: 'avatars' },
+      {
+        folder: 'avatars',
+        public_id: userId.toString(),
+        resource_type: 'image',
+        overwrite: true,
+        unique_filename: false,
+      },
       (error, result) => {
         if (error) return reject(error);
         resolve(result);
